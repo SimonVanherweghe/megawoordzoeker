@@ -1,5 +1,5 @@
-import { defineConfig } from 'vite'
-import { comlink } from 'vite-plugin-comlink'
+import { defineConfig } from "vite";
+import { comlink } from "vite-plugin-comlink";
 
 export default defineConfig({
   plugins: [comlink()],
@@ -7,6 +7,7 @@ export default defineConfig({
     plugins: () => [comlink()],
   },
   test: {
-    environment: 'jsdom',
+    environment: "jsdom",
   },
-})
+  base: "/megawoordzoeker/",
+});
