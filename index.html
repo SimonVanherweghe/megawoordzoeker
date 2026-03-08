@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mega Woordzoeker</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, sans-serif; background: #f5f5f5; color: #111; }
+
+    header { background: #1a1a2e; color: white; padding: 1rem 1.5rem; }
+    header h1 { font-size: 1.4rem; font-weight: 700; }
+
+    main { display: grid; grid-template-columns: 380px 1fr; gap: 1rem; padding: 1rem; max-width: 1600px; }
+
+    section { background: white; border-radius: 8px; padding: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    h2 { font-size: 1rem; font-weight: 600; margin-bottom: .75rem; border-bottom: 1px solid #eee; padding-bottom: .5rem; }
+    h3 { font-size: .85rem; font-weight: 600; margin-bottom: .25rem; color: #555; }
+
+    .sidebar { display: flex; flex-direction: column; gap: 1rem; }
+
+    .field { display: flex; flex-direction: column; gap: .25rem; margin-bottom: .5rem; }
+    label { font-size: .8rem; color: #555; }
+    input[type="text"], input[type="number"] {
+      border: 1px solid #ddd; border-radius: 4px; padding: .4rem .6rem; font-size: .9rem; width: 100%;
+    }
+    .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: .5rem; }
+
+    button {
+      background: #1a1a2e; color: white; border: none; border-radius: 4px;
+      padding: .5rem 1rem; font-size: .9rem; cursor: pointer;
+    }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    button:hover:not(:disabled) { background: #16213e; }
+    button.secondary { background: #555; }
+
+    .status { font-size: .8rem; color: #666; margin-top: .4rem; min-height: 1.2em; }
+
+    textarea {
+      width: 100%; border: 1px solid #ddd; border-radius: 4px;
+      padding: .4rem; font-size: .75rem; font-family: monospace; resize: vertical;
+    }
+    .list-actions { display: flex; gap: .5rem; margin-top: .5rem; }
+    .list-section { margin-bottom: .75rem; }
+
+    .canvas-panel { display: flex; flex-direction: column; gap: 1rem; }
+    #gridCanvas { border: 1px solid #ddd; border-radius: 4px; display: block; cursor: grab; }
+    #gridCanvas:active { cursor: grabbing; }
+    .canvas-actions { display: flex; gap: .5rem; align-items: center; }
+
+    #aWordList { list-style: none; display: flex; flex-wrap: wrap; gap: .4rem; font-size: .8rem; padding-top: .5rem; }
+    #aWordList li { background: #f0f0f0; border-radius: 3px; padding: .2rem .5rem; font-family: monospace; }
+  </style>
+</head>
+<body>
+  <header><h1>Mega Woordzoeker Generator</h1></header>
+  <main>
+    <div class="sidebar">
+
+      <section>
+        <h2>Wikipedia-bron</h2>
+        <div class="field">
+          <label for="wikiInput">Artikeltitel</label>
+          <input type="text" id="wikiInput" placeholder="bijv. Tweede Wereldoorlog" />
+        </div>
+        <button id="wikiFetch">Ophalen (diepte 3)</button>
+        <p class="status" id="wikiStatus"></p>
+      </section>
+
+      <section>
+        <h2>Woordenlijsten</h2>
+        <div id="wordListContainer"></div>
+      </section>
+
+      <section>
+        <h2>Rasterinstellingen</h2>
+        <div class="row3">
+          <div class="field">
+            <label for="widthCm">Breedte (cm)</label>
+            <input type="number" id="widthCm" value="90" min="10" max="200" step="1" />
+          </div>
+          <div class="field">
+            <label for="heightCm">Hoogte (cm)</label>
+            <input type="number" id="heightCm" value="200" min="10" max="500" step="10" />
+          </div>
+          <div class="field">
+            <label for="cellSizeCm">Cel (cm)</label>
+            <input type="number" id="cellSizeCm" value="2.5" min="1" max="5" step="0.5" />
+          </div>
+        </div>
+        <div class="field">
+          <label for="hiddenMessage">Verborgen bericht</label>
+          <input type="text" id="hiddenMessage" placeholder="bijv. GEFELICITAARD" />
+        </div>
+        <button id="generateBtn">Genereren</button>
+        <p class="status" id="generateStatus"></p>
+      </section>
+
+    </div>
+
+    <div class="canvas-panel">
+      <section>
+        <div class="canvas-actions">
+          <h2 style="flex:1; border:none; margin:0; padding:0;">Voorvertoning</h2>
+          <button id="exportBtn" class="secondary" disabled>SVG exporteren</button>
+        </div>
+        <canvas id="gridCanvas" width="800" height="500"></canvas>
+      </section>
+
+      <section>
+        <h2>Te zoeken woorden</h2>
+        <ul id="aWordList"></ul>
+      </section>
+    </div>
+  </main>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
