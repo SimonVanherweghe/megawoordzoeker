@@ -2,13 +2,38 @@ import { describe, it, expect } from 'vitest'
 import { generateGrid, computeDimensions } from '../grid.ts'
 import type { GenerationOptions } from '../types.ts'
 
-const BASE_CONFIG = { widthCm: 30, heightCm: 30, cellSizeCm: 2.5 } // 12x12 grid
+const BASE_CONFIG = { widthCm: 30, heightCm: 30, cellSizeCm: 2.5 } // 12x12 = 144 cells
+// Larger grid for tests that require full coverage (isolated cells much less likely)
+const FILL_CONFIG = { widthCm: 75, heightCm: 75, cellSizeCm: 2.5 } // 30x30 = 900 cells
+
+// A diverse set of B-words with varied letters so the gap fill can cover any cell
+const B_FILL: string[] = [
+  'bad', 'bak', 'bal', 'ban', 'bar', 'bas', 'bat',
+  'dak', 'dam', 'dan', 'das', 'dat', 'dek',
+  'eer', 'elk', 'erg', 'ers',
+  'fax', 'fin', 'fit',
+  'gas', 'gat', 'gek', 'gel', 'gem', 'god',
+  'hal', 'ham', 'has', 'hat', 'hek', 'hem',
+  'ijs', 'ink',
+  'jam', 'jan', 'jas',
+  'kap', 'kar', 'kas', 'kat', 'kel', 'kem', 'ken', 'kep',
+  'lam', 'lap', 'las', 'lat', 'leg', 'lek', 'les', 'let',
+  'mal', 'man', 'mar', 'mas', 'mat', 'mel', 'men', 'mes',
+  'nak', 'nal', 'nam', 'nat', 'nel', 'nem', 'nes', 'net',
+  'pal', 'pan', 'par', 'pas', 'pat', 'pel', 'pen', 'per', 'pet',
+  'rad', 'rag', 'rak', 'ram', 'rap', 'ras', 'rat', 'reg', 'rem', 'rep', 'res', 'ret',
+  'sal', 'san', 'sap', 'sar', 'sat', 'sel', 'sen', 'ser', 'set',
+  'tak', 'tal', 'tam', 'tan', 'tap', 'tar', 'tas', 'tat', 'tel', 'ten', 'ter', 'tes',
+  'val', 'van', 'var', 'vas', 'vel', 'ven', 'ver', 'vet',
+  'wal', 'wan', 'war', 'was', 'wat', 'wel', 'wen', 'wer', 'wet',
+  'zak', 'zal', 'zam', 'zan', 'zap', 'zar', 'zat', 'zel', 'zen', 'zet',
+]
 
 function makeOptions(overrides: Partial<GenerationOptions> = {}): GenerationOptions {
   return {
     gridConfig: BASE_CONFIG,
     aList: [],
-    bList: [],
+    bList: B_FILL,
     hiddenMessage: '',
     ...overrides,
   }
@@ -40,65 +65,73 @@ describe('grid collision detection', () => {
   })
 
   it('allows two words that share an identical crossing letter', () => {
-    // HALLO and AARDE share the letter A
     const outcome = generateGrid(makeOptions({ aList: ['HALLO', 'AARDE'] }))
     expect(outcome.ok).toBe(true)
     if (!outcome.ok) return
-    expect(outcome.result.placed.length).toBe(2)
+    const aWords = outcome.result.placed.filter((p) => p.isAList)
+    expect(aWords.length).toBe(2)
   })
 
-  it('grid cells at intersections contain the shared letter', () => {
-    // Force a known configuration: small grid, two words known to share a letter
-    const outcome = generateGrid(
-      makeOptions({ aList: ['KAAS', 'ADEM'], gridConfig: { widthCm: 25, heightCm: 25, cellSizeCm: 2.5 } }),
-    )
+  it('grid cells at placed word positions contain the correct letters', () => {
+    const outcome = generateGrid(makeOptions({ aList: ['KAAS', 'ADEM'] }))
     expect(outcome.ok).toBe(true)
     if (!outcome.ok) return
 
     const { grid, cols, placed } = outcome.result
-    for (const pw of placed) {
-      // Verify each letter of each placed word is in the grid
+    for (const pw of placed.filter((p) => p.isAList)) {
       const [dc, dr] = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,-1],[1,-1],[-1,1]][pw.direction]
       const startCol = pw.startIndex % cols
       const startRow = Math.floor(pw.startIndex / cols)
       for (let i = 0; i < pw.word.length; i++) {
-        const col = startCol + dc * i
-        const row = startRow + dr * i
-        const idx = row * cols + col
+        const idx = (startRow + dr * i) * cols + (startCol + dc * i)
         expect(grid[idx]).toBe(pw.word[i].toUpperCase())
       }
     }
   })
+
+  it('grid is fully filled — no empty cells and no random filler', () => {
+    const outcome = generateGrid(makeOptions({ aList: ['NEDERLAND', 'AMSTERDAM'], gridConfig: FILL_CONFIG }))
+    expect(outcome.ok).toBe(true)
+    if (!outcome.ok) return
+    expect(outcome.result.grid.every((c) => c !== '')).toBe(true)
+  })
 })
 
 describe('hidden message injection', () => {
-  it('injects message characters into empty cells left-to-right, top-to-bottom', () => {
+  it('hiddenMessageIndices spell out the message in the grid', () => {
     const hiddenMessage = 'HALLO'
-    const outcome = generateGrid(makeOptions({ hiddenMessage, aList: [] }))
+    const outcome = generateGrid(makeOptions({ hiddenMessage, gridConfig: FILL_CONFIG }))
     expect(outcome.ok).toBe(true)
     if (!outcome.ok) return
 
-    const { grid } = outcome.result
-    // The first 5 non-empty cells (in order) should spell HALLO
-    const letters = grid.slice(0, 5).join('')
-    expect(letters).toBe('HALLO')
+    const { grid, hiddenMessageIndices } = outcome.result
+    const recovered = hiddenMessageIndices.map((i) => grid[i]).join('')
+    expect(recovered).toBe('HALLO')
   })
 
-  it('injects message sequentially into the first empty slots', () => {
-    const hiddenMessage = 'TEST'
-    const outcome = generateGrid(makeOptions({ hiddenMessage, aList: [] }))
+  it('hidden message indices are in strictly ascending order (left-to-right, top-to-bottom)', () => {
+    const outcome = generateGrid(makeOptions({ hiddenMessage: 'TESTBERICHT', gridConfig: FILL_CONFIG }))
     expect(outcome.ok).toBe(true)
     if (!outcome.ok) return
 
-    const { grid } = outcome.result
-    expect(grid.slice(0, 4).join('')).toBe('TEST')
+    const { hiddenMessageIndices } = outcome.result
+    for (let i = 1; i < hiddenMessageIndices.length; i++) {
+      expect(hiddenMessageIndices[i]).toBeGreaterThan(hiddenMessageIndices[i - 1])
+    }
+  })
+
+  it('grid is completely filled after message injection and gap fill', () => {
+    const outcome = generateGrid(makeOptions({ hiddenMessage: 'GEFELICITAARD', gridConfig: FILL_CONFIG }))
+    expect(outcome.ok).toBe(true)
+    if (!outcome.ok) return
+    expect(outcome.result.grid.every((c) => c !== '')).toBe(true)
   })
 
   it('returns NOT_ENOUGH_CELLS error when message is longer than empty cells', () => {
-    const tinyConfig = { widthCm: 5, heightCm: 5, cellSizeCm: 2.5 } // 2x2 = 4 cells
+    // 2x2 = 4 cells — no 3-letter word fits, so all 4 cells are empty before message
+    const tinyConfig = { widthCm: 5, heightCm: 5, cellSizeCm: 2.5 }
     const outcome = generateGrid(makeOptions({
       hiddenMessage: 'DEZEBERICHTISTELANNG',
-      aList: [],
       gridConfig: tinyConfig,
     }))
     expect(outcome.ok).toBe(false)

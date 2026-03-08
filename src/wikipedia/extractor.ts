@@ -40,6 +40,29 @@ async function fetchArticle(
   }
 }
 
+/**
+ * Removes A-list words that are a prefix of another word in the same list.
+ * e.g. "mens" is removed when "mensen" is also present.
+ * The longer, more distinctive word is kept.
+ */
+export function filterSimilarWords(words: string[]): string[] {
+  const lower = words.map((w) => w.toLowerCase())
+  const remove = new Set<number>()
+
+  for (let i = 0; i < lower.length; i++) {
+    if (remove.has(i)) continue
+    for (let j = 0; j < lower.length; j++) {
+      if (i === j || remove.has(j)) continue
+      if (lower[j].startsWith(lower[i]) && lower[j] !== lower[i]) {
+        remove.add(i)
+        break
+      }
+    }
+  }
+
+  return words.filter((_, i) => !remove.has(i))
+}
+
 export function sanitizeText(text: string): string[] {
   return text
     .toLowerCase()
@@ -110,7 +133,7 @@ export async function extractWordLists(
   }
 
   return {
-    aList: [...aWords],
+    aList: filterSimilarWords([...aWords]),
     bList: [...bWords],
   }
 }

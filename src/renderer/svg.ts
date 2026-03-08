@@ -14,7 +14,7 @@ export function generateSVG(result: GenerationResult, cellSizeMm = CELL_SIZE_MM)
   lines.push(
     `<svg xmlns="http://www.w3.org/2000/svg" width="${width}mm" height="${height}mm" viewBox="0 0 ${width} ${height}">`,
     `<rect width="${width}" height="${height}" fill="white"/>`,
-    `<g font-family="monospace" font-size="${FONT_SIZE_MM}" text-anchor="middle" dominant-baseline="central" fill="#111">`,
+    `<g font-family="monospace" font-size="${FONT_SIZE_MM}" text-anchor="middle" fill="#111">`,
   )
 
   for (let row = 0; row < rows; row++) {
@@ -33,7 +33,7 @@ export function generateSVG(result: GenerationResult, cellSizeMm = CELL_SIZE_MM)
 
       // Letter
       if (letter) {
-        lines.push(`<text x="${cx}" y="${cy}">${escapeXML(letter)}</text>`)
+        lines.push(`<text x="${cx}" y="${cy}" dy="0.35em">${escapeXML(letter)}</text>`)
       }
     }
   }

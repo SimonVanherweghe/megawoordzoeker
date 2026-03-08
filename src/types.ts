@@ -23,6 +23,7 @@ export interface GenerationResult {
   placed: PlacedWord[]
   cols: number
   rows: number
+  hiddenMessageIndices: number[]
 }
 
 export interface GenerationOptions {
@@ -33,7 +34,7 @@ export interface GenerationOptions {
 }
 
 export interface GenerationError {
-  type: 'NOT_ENOUGH_CELLS'
+  type: 'NOT_ENOUGH_CELLS' | 'UNFILLABLE_CELLS'
   message: string
 }
 
