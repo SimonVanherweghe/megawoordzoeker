@@ -161,7 +161,7 @@ generateBtn.addEventListener('click', async () => {
   }
 
   saveGenerationResult(outcome.result)
-  applyResult(outcome.result, hiddenMsgInput.value.trim())
+  applyResult(outcome.result)
 })
 
 // --- Hidden message toggle ---
@@ -206,7 +206,7 @@ copyBtn.addEventListener('click', async () => {
 })
 
 // --- Apply result (generate + restore) ---
-function applyResult(result: import('./types.ts').GenerationResult, hiddenMessage = ''): void {
+function applyResult(result: import('./types.ts').GenerationResult): void {
   currentResult = result
   const { placed, cols, hiddenMessageIndices } = result
 
@@ -240,7 +240,7 @@ function applyResult(result: import('./types.ts').GenerationResult, hiddenMessag
   ;(canvas as unknown as { _coverageMap: Map<number, string> })._coverageMap = coverageMap
 
   exportBtn.disabled = false
-  showMsgBtn.disabled = !hiddenMessage
+  showMsgBtn.disabled = result.hiddenMessageIndices.length === 0
   coverageBtn.disabled = false
 
   renderWordList()
